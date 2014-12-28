@@ -66,17 +66,14 @@ libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Generic Python Roguelike
 
 con = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
 
-player = Actor(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, '@', libtcod.white, con)
+player = Actor(25, 23, '@', libtcod.white, con)
 npc = Actor(4, 4, 'L', libtcod.yellow, con)
 
 # Generate the map for the particular level
 tile_map = AbstractMap(MAP_WIDTH, MAP_HEIGHT)
 tile_map.make_map()
+tile_map.create_h_tunnel(25, 55, 23)
 
-tile_map.map[30][22].block_move = True
-tile_map.map[30][22].block_sight = True
-tile_map.map[50][22].block_move = True
-tile_map.map[50][22].block_sight = True
 
 while not libtcod.console_is_window_closed():
 
