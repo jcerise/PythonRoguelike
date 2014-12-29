@@ -9,7 +9,7 @@ class AbstractMap:
 
     def make_map(self):
         self.map = [
-            [Tile(True)
+            [Tile(x, y, False)
                 for y in range(self.map_height)]
                     for x in range(self.map_width)]
 

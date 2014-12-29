@@ -1,4 +1,4 @@
-from MapComponents import AbstractMap, StandardDungeon
+from MapComponents import AbstractMap, StandardDungeon, CavernDungeon
 import libtcodpy as libtcod
 from Actor import Actor
 
@@ -67,19 +67,23 @@ libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Generic Python Roguelike
 con = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
 
 player = Actor(25, 23, '@', libtcod.white, con)
-npc = Actor(4, 4, 'L', libtcod.yellow, con)
 
 # Generate the map for the particular level
 tile_map = AbstractMap(MAP_WIDTH, MAP_HEIGHT)
 tile_map.make_map()
-standard_dungeon = StandardDungeon(tile_map, 10, 6, 30, MAP_WIDTH, MAP_HEIGHT)
+
+if libtcod.random_get_int(0, 0, 1) == 1:
+    dungeon = StandardDungeon(tile_map, 10, 6, 30, MAP_WIDTH, MAP_HEIGHT)
+else:
+    dungeon = CavernDungeon(tile_map, MAP_WIDTH, MAP_HEIGHT)
+
 # Carve the dungeon layout, and set the players starting coordinates
-player.x, player.y = standard_dungeon.carve_layout()
+player.x, player.y = dungeon.carve_layout()
 
 
 while not libtcod.console_is_window_closed():
 
-    actors = [npc, player]
+    actors = [player]
     render_all()
     libtcod.console_flush()
 

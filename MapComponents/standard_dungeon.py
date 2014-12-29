@@ -1,12 +1,12 @@
-from MapComponents import Rect
+from MapComponents import Rect, Tile
 import libtcodpy as libtcod
 
 
 class StandardDungeon:
     # A standard dungeon, rooms of random size are placed within the map, and then connected
 
-    def __init__(self, map, room_max_size, room_min_size, max_rooms, map_width, map_height):
-        self.map = map
+    def __init__(self, tile_map, room_max_size, room_min_size, max_rooms, map_width, map_height):
+        self.tile_map = tile_map
         self.room_max_size = room_max_size
         self.room_min_size = room_min_size
         self.max_rooms = max_rooms
@@ -14,6 +14,12 @@ class StandardDungeon:
         self.map_height = map_height
 
     def carve_layout(self):
+        # First, make the entire map walls (it gets passed in as all floor)
+        for y in range(self.map_height):
+            for x in range(self.map_width):
+                self.tile_map.map[x][y].block_move = True
+                self.tile_map.map[x][y].block_sight = True
+
         rooms = []
         num_rooms = 0
 
@@ -36,7 +42,7 @@ class StandardDungeon:
 
             if not failed:
                 # There were no intersections, so this is a valid room
-                self.map.create_room(new_room)
+                self.tile_map.create_room(new_room)
                 cur_center_x, cur_center_y = new_room.center()
 
                 if num_rooms > 0:
@@ -46,11 +52,11 @@ class StandardDungeon:
 
                     # Flip a coin to see how the tunnel will generate (horizontal then vertical, or vice versa)
                     if libtcod.random_get_int(0, 0, 1) == 1:
-                        self.map.create_h_tunnel(prev_center_x, cur_center_x, prev_center_y)
-                        self.map.create_v_tunnel(prev_center_y, cur_center_y, cur_center_x)
+                        self.tile_map.create_h_tunnel(prev_center_x, cur_center_x, prev_center_y)
+                        self.tile_map.create_v_tunnel(prev_center_y, cur_center_y, cur_center_x)
                     else:
-                        self.map.create_v_tunnel(prev_center_y, cur_center_y, prev_center_x)
-                        self.map.create_h_tunnel(prev_center_x, cur_center_x, cur_center_y)
+                        self.tile_map.create_v_tunnel(prev_center_y, cur_center_y, prev_center_x)
+                        self.tile_map.create_h_tunnel(prev_center_x, cur_center_x, cur_center_y)
                 else:
                     # This is the first room, where the player starts, return the center coordinates
                     start_x, start_y = cur_center_x, cur_center_y
