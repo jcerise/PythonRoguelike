@@ -8,15 +8,10 @@ class AbstractMap:
         self.map_height = map_height
 
     def make_map(self):
-        from MapComponents import Rect
         self.map = [
             [Tile(True)
                 for y in range(self.map_height)]
                     for x in range(self.map_width)]
-        room1 = Rect(20, 15, 10, 15)
-        room2 = Rect(50, 15, 10, 15)
-        self.create_room(room1)
-        self.create_room(room2)
 
         return self.map
 

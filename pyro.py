@@ -1,4 +1,4 @@
-from MapComponents import AbstractMap
+from MapComponents import AbstractMap, StandardDungeon
 import libtcodpy as libtcod
 from Actor import Actor
 
@@ -72,7 +72,9 @@ npc = Actor(4, 4, 'L', libtcod.yellow, con)
 # Generate the map for the particular level
 tile_map = AbstractMap(MAP_WIDTH, MAP_HEIGHT)
 tile_map.make_map()
-tile_map.create_h_tunnel(25, 55, 23)
+standard_dungeon = StandardDungeon(tile_map, 10, 6, 30, MAP_WIDTH, MAP_HEIGHT)
+# Carve the dungeon layout, and set the players starting coordinates
+player.x, player.y = standard_dungeon.carve_layout()
 
 
 while not libtcod.console_is_window_closed():
