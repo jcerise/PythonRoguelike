@@ -12,6 +12,7 @@ class Tile:
         self.block_sight = block_sight
 
         self.visited = False
+        self.explored = False
 
     def is_wall(self):
         # Check if this tile is a wall (blocks sight and movement)
