@@ -14,5 +14,5 @@ class Rect:
 
     def intersect(self, other):
         # Return True if this rectangle intersects another one
-        return (self.x1 <= other.x2 and self.x2 >= other.x2 and
-                self.y1 <= other.y1 and self.y2 >= other.y2)
+        return (self.x1 <= other.x2 and self.x2 >= other.x1 and
+                self.y1 <= other.y2 and self.y2 >= other.y1)
