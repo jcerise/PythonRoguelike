@@ -15,10 +15,15 @@ class Actor:
             self.x += dx
             self.y += dy
 
-    def draw(self):
+    def draw(self, x=-1, y=-1):
+        if not x:
+            x = self.x
+        if not y:
+            y = self.y
+
         # Set the character color, and then draw the actor to the console
         libtcod.console_set_default_foreground(self.con, self.color)
-        libtcod.console_put_char(self.con, self.x, self.y, self.char, libtcod.BKGND_NONE)
+        libtcod.console_put_char(self.con, x, y, self.char, libtcod.BKGND_NONE)
 
     def clear(self):
         # Erase the character that represents this actor

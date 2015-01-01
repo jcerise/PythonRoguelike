@@ -6,9 +6,14 @@ from Actor import Actor
 SCREEN_WIDTH = 80
 SCREEN_HEIGHT = 50
 
+# Size of the map portion actually shown on the screen
+CAMERA_WIDTH = 80
+CAMERA_HEIGHT = 43
+camera_x, camera_y = 0, 0
+
 # Map width and height (slightly smaller for now to allow for message area)
-MAP_WIDTH = 80
-MAP_HEIGHT = 45
+MAP_WIDTH = 200
+MAP_HEIGHT = 200
 
 # Define FOV constants
 FOV_ALGORITHM = 0
@@ -21,6 +26,32 @@ color_dark_wall = libtcod.Color(63, 63, 63)
 color_light_wall = libtcod.Color(159, 159, 159)
 color_dark_ground = libtcod.Color(63, 50, 31)
 color_light_ground = libtcod.Color(158, 134, 100)
+
+
+def move_camera(target_x, target_y):
+    global camera_x, camera_y, fov_recompute
+    # new camera coordinates (top-left corner of the screen relative to the map)
+    x = target_x - CAMERA_WIDTH / 2  #coordinates so that the target is at the center of the screen
+    y = target_y - CAMERA_HEIGHT / 2
+
+    # make sure the camera doesn't see outside the map
+    if x < 0: x = 0
+    if y < 0: y = 0
+    if x > MAP_WIDTH - CAMERA_WIDTH - 1: x = MAP_WIDTH - CAMERA_WIDTH - 1
+    if y > MAP_HEIGHT - CAMERA_HEIGHT - 1: y = MAP_HEIGHT - CAMERA_HEIGHT - 1
+
+    if x != camera_x or y != camera_y: fov_recompute = True
+
+    (camera_x, camera_y) = (x, y)
+
+
+def to_camera_coordinates(x, y):
+    # Convert coordinates on the map to coordinates on the screen
+    x, y = (x - camera_x, y - camera_y)
+
+    if x < 0 or y < 0 or x >= CAMERA_WIDTH or y >= CAMERA_HEIGHT:
+        return None, None  # If its outside the view, return nothing
+    return x, y
 
 
 def handle_keys():
@@ -55,36 +86,44 @@ def handle_keys():
 def render_all():
     # Check if the FOV map needs to be recomputed
     global fov_recompute
+
+    move_camera(player.x, player.y)
+
     if fov_recompute:
         fov_recompute = False
         libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGORITHM)
+        libtcod.console_clear(con)
 
-    # Draw map tiles to the console
-    for y in range(MAP_HEIGHT):
-        for x in range(MAP_WIDTH):
-            # Check to see if the current tile is visible
-            visible = libtcod.map_is_in_fov(fov_map, x, y)
-            wall = tile_map.map[x][y].block_sight
-            if not visible:
-                # Check if the player has explored this yet or not. If not, do not show it. If so, display it darkened.
-                if tile_map.map[x][y].explored:
-                    if wall:
-                        libtcod.console_put_char_ex(con, x, y, '#', color_dark_wall, libtcod.black)
-                    else:
-                        libtcod.console_put_char_ex(con, x, y, '.', color_dark_ground, libtcod.black)
-            else:
-                if wall:
-                    libtcod.console_put_char_ex(con, x, y, '#', color_light_wall, libtcod.black)
+        # Draw map tiles to the console
+        for y in range(CAMERA_HEIGHT):
+            for x in range(CAMERA_WIDTH):
+                map_x, map_y = camera_x + x, camera_y + y
+                # Check to see if the current tile is visible
+                visible = libtcod.map_is_in_fov(fov_map, map_x, map_y)
+                wall = tile_map.map[map_x][map_y].block_sight
+                if not visible:
+                    # Check if the player has explored this yet or not. If not, do not show it. If so, display it darkened.
+                    if tile_map.map[map_x][map_y].explored:
+                        if wall:
+                            libtcod.console_put_char_ex(con, x, y, '#', color_dark_wall, libtcod.black)
+                        else:
+                            libtcod.console_put_char_ex(con, x, y, '.', color_dark_ground, libtcod.black)
                 else:
-                    libtcod.console_put_char_ex(con, x, y, '.', color_light_ground, libtcod.black)
-                tile_map.map[x][y].explored = True
+                    if wall:
+                        libtcod.console_put_char_ex(con, x, y, '#', color_light_wall, libtcod.black)
+                    else:
+                        libtcod.console_put_char_ex(con, x, y, '.', color_light_ground, libtcod.black)
+                    tile_map.map[map_x][map_y].explored = True
 
     # Draw actors to the console
     for actor in actors:
         if libtcod.map_is_in_fov(fov_map, actor.x, actor.y):
-            actor.draw()
+            x, y = to_camera_coordinates(actor.x, actor.y)
 
-    libtcod.console_blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+            if x is not None:
+                actor.draw(x, y)
+
+    libtcod.console_blit(con, 0, 0, MAP_WIDTH, MAP_HEIGHT, 0, 0, 0)
 
 #############################################
 # Initialization and Main Loop
@@ -93,7 +132,7 @@ def render_all():
 libtcod.console_set_custom_font('font/arial.png', libtcod.FONT_TYPE_GRAYSCALE | libtcod.FONT_LAYOUT_TCOD)
 libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Generic Python Roguelike', False)
 
-con = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
+con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
 
 player = Actor(25, 23, '@', libtcod.white, con)
 
@@ -102,7 +141,7 @@ tile_map = AbstractMap(MAP_WIDTH, MAP_HEIGHT)
 tile_map.make_map()
 
 if libtcod.random_get_int(0, 0, 1) == 1:
-    dungeon = StandardDungeon(tile_map, 10, 6, 30, MAP_WIDTH, MAP_HEIGHT)
+    dungeon = StandardDungeon(tile_map, 10, 6, 50, MAP_WIDTH, MAP_HEIGHT)
 else:
     dungeon = CavernDungeon(tile_map, MAP_WIDTH, MAP_HEIGHT)
 
